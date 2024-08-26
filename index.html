@@ -1,0 +1,520 @@
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Problems Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 210mm;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            color: #333;
+        }
+        .problem-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+        }
+        .problem, .user-answer {
+            font-size: 1.2em;
+            width: 30%;
+            text-align: center;
+        }
+        .user-answer input {
+            width: 85%;
+            font-size: 1.2em;
+            text-align: center;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .feedback {
+            font-size: 1em;
+            width: 40%;
+            text-align: left;
+            padding-left: 10px;
+        }
+        .correct, .incorrect {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .correct {
+            background-color: #4caf50;
+        }
+        .incorrect {
+            background-color: #f44336;
+        }
+        .controls, .button-row {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .controls div, .button-row button {
+            margin-bottom: 10px;
+        }
+        .controls label {
+            margin-right: 10px;
+        }
+        .controls select, .controls input {
+            margin-left: 10px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .button-row button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            background-color: #007bff;
+            transition: background-color 0.3s;
+        }
+        .button-row button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .score-summary {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        .print-section {
+            margin-bottom: 20px;
+            display: none;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .print-section label {
+            margin-right: 10px;
+        }
+        .print-section input {
+            width: calc(100% - 22px);
+            font-size: 1em;
+            text-align: center;
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        @media print {
+            .controls, .button-row, .score-summary {
+                display: none;
+            }
+            .print-hidden {
+                display: none;
+            }
+            .feedback {
+                display: block;
+            }
+            .user-answer input {
+                display: block;
+            }
+            .print-section {
+                display: block;
+            }
+            @page {
+                margin: 10mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="pageTitle">Math Problems Generator</h1>
+
+        <div class="controls">
+            <div>
+                <label for="operation">Operation:</label>
+                <select id="operation">
+                    <option value="multiplication">Multiplication</option>
+                    <option value="division">Division</option>
+                    <option value="addition">Addition</option>
+                    <option value="subtraction">Subtraction</option>
+                    <option value="mixed">Mixed</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="difficulty">Difficulty:</label>
+                <select id="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="average">Average</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="numQuestions">Number of Questions:</label>
+                <input type="number" id="numQuestions" min="1" value="10" />
+            </div>
+        </div>
+
+        <div class="button-row">
+            <button class="refresh" onclick="generateProblems()">Generate Problems</button>
+            <button class="check-button" onclick="checkAnswers()">Check</button>
+            <button class="print-button" onclick="printStudentCopy()">Print Student Copy</button>
+            <button class="print-button" onclick="printTeacherCopy()">Print Teacher Copy</button>
+        </div>
+
+        <div class="print-section" id="printSection">
+            <div>
+                <label for="name">Name:</label>
+                <input type="text" id="name" readonly />
+            </div>
+            <div>
+                <label for="date">Date:</label>
+                <input type="text" id="date" readonly />
+            </div>
+            <div>
+                <label for="class">Class:</label>
+                <input type="text" id="class" readonly />
+            </div>
+        </div>
+
+        <div class="score-summary" id="scoreSummary"></div>
+        <div id="mathProblems"></div>
+    </div>
+
+    <script>
+        function getRandomNumber(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function titleCase(str) {
+            return str.toLowerCase().replace(/^(.)|\s+(.)/g, (match, p1, p2) => p1.toUpperCase() + p2.toUpperCase());
+        }
+
+        function updateTitle() {
+            const operation = document.getElementById('operation').value;
+            const difficulty = document.getElementById('difficulty').value;
+            const numQuestions = document.getElementById('numQuestions').value;
+            const title = `${numQuestions} ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} ${operation.charAt(0).toUpperCase() + operation.slice(1)} Math Questions`;
+            document.getElementById('pageTitle').textContent = title;
+        }
+
+        function generateProblem(operation, difficulty) {
+            let num1, num2, num3, dividend, divisor, problem, answer, quotient, remainder;
+
+            function adjustForRemainder() {
+                while (remainder > 99) {
+                    dividend = getRandomNumber(10, 999);
+                    divisor = getRandomNumber(1, 99);
+                    quotient = Math.floor(dividend / divisor);
+                    remainder = dividend % divisor;
+                }
+            }
+
+            switch (operation) {
+                case 'multiplication':
+                    num1 = getRandomNumber(1, difficulty === 'easy' ? 9 : 99);
+                    num2 = getRandomNumber(1, difficulty === 'easy' ? 9 : (difficulty === 'average' ? (Math.random() < 0.5 ? 9 : 99) : 999));
+                    problem = `${num1} × ${num2}`;
+                    answer = num1 * num2;
+                    break;
+                case 'division':
+                    do {
+                        num1 = getRandomNumber(difficulty === 'easy' ? 1 : (difficulty === 'average' ? 1 : 10), difficulty === 'easy' ? 9 : (difficulty === 'average' ? 9 : 99));
+                        num2 = getRandomNumber(1, 9); // Ensure divisor is small for easy mode
+                        dividend = num1 * num2;
+                        divisor = getRandomNumber(difficulty === 'easy' ? 1 : (difficulty === 'average' ? 1 : 10), difficulty === 'easy' ? 9 : (difficulty === 'average' ? 99 : 999));
+                        quotient = Math.floor(dividend / divisor);
+                        remainder = dividend % divisor;
+                        adjustForRemainder();
+                        if (difficulty === 'easy' && dividend > 99) dividend = getRandomNumber(10, 99);
+                    } while (quotient < 1 || remainder > 99);
+                    answer = remainder === 0 ? `${quotient}` : `${quotient}r${remainder}`;
+                    problem = `${dividend} ÷ ${divisor}`;
+                    break;
+                case 'addition':
+                    num1 = getRandomNumber(1, difficulty === 'easy' ? 9 : (difficulty === 'average' ? 99 : 999));
+                    num2 = getRandomNumber(1, difficulty === 'easy' ? 9 : (difficulty === 'average' ? 99 : 999));
+                    problem = `${num1} + ${num2}`;
+                    answer = num1 + num2;
+                    break;
+                case 'subtraction':
+                    num1 = getRandomNumber(1, difficulty === 'easy' ? 9 : (difficulty === 'average' ? 99 : 999));
+                    num2 = getRandomNumber(1, difficulty === 'easy' ? num1 : (difficulty === 'average' ? num1 : 999));
+                    if (num2 > num1) [num1, num2] = [num2, num1]; // Ensure non-negative results
+                    problem = `${num1} - ${num2}`;
+                    answer = num1 - num2;
+                    break;
+                case 'mixed':
+                    const operations = ['multiplication', 'division', 'addition', 'subtraction'];
+                    const selectedOperation = operations[Math.floor(Math.random() * operations.length)];
+                    return generateProblem(selectedOperation, difficulty);
+            }
+
+            return { problem, answer };
+        }
+
+        function generateProblems() {
+            updateTitle();
+            const operation = document.getElementById('operation').value;
+            const difficulty = document.getElementById('difficulty').value;
+            const numQuestions = parseInt(document.getElementById('numQuestions').value);
+            const problemsContainer = document.getElementById('mathProblems');
+            problemsContainer.innerHTML = '';
+
+            for (let i = 0; i < numQuestions; i++) {
+                const { problem, answer } = generateProblem(operation, difficulty);
+                problemsContainer.innerHTML += `
+                    <div class="problem-container">
+                        <div class="problem">${problem} =</div>
+                        <div class="user-answer">
+                            <input type="text" id="answer${i}" />
+                        </div>
+                        <div class="feedback" id="feedback${i}"></div>
+                    </div>
+                `;
+            }
+        }
+
+        function checkAnswers() {
+            const numQuestions = parseInt(document.getElementById('numQuestions').value);
+            let correctCount = 0;
+
+            for (let i = 0; i < numQuestions; i++) {
+                const userAnswer = document.getElementById(`answer${i}`).value.trim();
+                const feedbackElement = document.getElementById(`feedback${i}`);
+                const problemElement = document.getElementById(`problem${i}`);
+                const correctAnswer = getCorrectAnswer(i);
+                let isCorrect = userAnswer == correctAnswer;
+
+                feedbackElement.innerHTML = `
+                    <span class="${isCorrect ? 'correct' : 'incorrect'}"></span>
+                    ${isCorrect ? '' : `Answer: ${correctAnswer}`}
+                `;
+
+                if (isCorrect) {
+                    correctCount++;
+                }
+            }
+
+            const scorePercentage = ((correctCount / numQuestions) * 100).toFixed(2);
+            document.getElementById('scoreSummary').innerHTML = `Score: ${correctCount}/${numQuestions} (${scorePercentage}%)`;
+        }
+
+        function getCorrectAnswer(index) {
+            const operation = document.getElementById('operation').value;
+            const difficulty = document.getElementById('difficulty').value;
+            const { answer } = generateProblem(operation, difficulty);
+            return answer;
+        }
+
+        function printStudentCopy() {
+            document.querySelector('.print-section').style.display = 'none';
+            window.print();
+        }
+
+        function printTeacherCopy() {
+            document.querySelector('.print-section').style.display = 'block';
+            window.print();
+        }
+    </script>
+</body>
+</html>
+
+
+  <script>
+        function getRandomNumber(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function titleCase(str) {
+            return str.toLowerCase().replace(/^(.)|\s+(.)/g, (match, p1, p2) => p1.toUpperCase() + p2.toUpperCase());
+        }
+
+        function updateTitle() {
+            const operation = document.getElementById('operation').value;
+            const difficulty = document.getElementById('difficulty').value;
+            const numQuestions = document.getElementById('numQuestions').value;
+            const title = `${numQuestions} ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} ${operation.charAt(0).toUpperCase() + operation.slice(1)} Math Questions`;
+            document.getElementById('pageTitle').textContent = title;
+        }
+
+        function generateProblem(operation, difficulty) {
+            let num1, num2, num3, dividend, divisor, problem, answer, quotient, remainder;
+
+            function adjustForRemainder() {
+                while (remainder > 99) {
+                    dividend = getRandomNumber(10, 999);
+                    divisor = getRandomNumber(1, 99);
+                    quotient = Math.floor(dividend / divisor);
+                    remainder = dividend % divisor;
+                }
+            }
+
+            switch (operation) {
+                case 'multiplication':
+                    num1 = getRandomNumber(1, difficulty === 'easy' ? 9 : 99);
+                    num2 = getRandomNumber(1, difficulty === 'easy' ? 9 : (difficulty === 'average' ? (Math.random() < 0.5 ? 9 : 99) : 999));
+                    problem = `${num1} × ${num2}`;
+                    answer = num1 * num2;
+                    break;
+                case 'division':
+                    do {
+                        num1 = getRandomNumber(difficulty === 'easy' ? 1 : (difficulty === 'average' ? 1 : 10), difficulty === 'easy' ? 9 : (difficulty === 'average' ? 9 : 99));
+                        num2 = getRandomNumber(1, 9); // Ensure divisor is small for easy mode
+                        dividend = num1 * num2;
+                        divisor = getRandomNumber(difficulty === 'easy' ? 1 : (difficulty === 'average' ? 1 : 10), difficulty === 'easy' ? 9 : (difficulty === 'average' ? 99 : 999));
+                        quotient = Math.floor(dividend / divisor);
+                        remainder = dividend % divisor;
+                        adjustForRemainder();
+                        if (difficulty === 'easy' && dividend > 99) dividend = getRandomNumber(10, 99);
+                    } while (quotient < 1 || remainder > 99);
+                    answer = remainder === 0 ? `${quotient}` : `${quotient}r${remainder}`;
+                    problem = `${dividend} ÷ ${divisor}`;
+                    break;
+                case 'addition':
+                    num1 = getRandomNumber(1, difficulty === 'easy' ? 9 : (difficulty === 'average' ? (Math.random() < 0.5 ? 9 : 99) : 999));
+                    num2 = getRandomNumber(1, difficulty === 'easy' ? 9 : (difficulty === 'average' ? (Math.random() < 0.5 ? 9 : 99) : 999));
+                    problem = `${num1} + ${num2}`;
+                    answer = num1 + num2;
+                    break;
+                case 'subtraction':
+                    do {
+                        num1 = getRandomNumber(1, difficulty === 'easy' ? 9 : (difficulty === 'average' ? (Math.random() < 0.5 ? 9 : 99) : 999));
+                    	num2 = getRandomNumber(1, difficulty === 'easy' ? 9 : (difficulty === 'average' ? (Math.random() < 0.5 ? 9 : 99) : 999));
+                    } while (num1 - num2 < 0);
+                    problem = `${num1} - ${num2}`;
+                    answer = num1 - num2;
+                    break;
+                case 'mixed':
+                    const mixedOperations = ['addition', 'subtraction', 'multiplication', 'division'];
+                    return generateProblem(mixedOperations[Math.floor(Math.random() * mixedOperations.length)], difficulty);
+            }
+
+            return { problem, answer };
+        }
+
+        function generateProblems() {
+            const operation = document.getElementById('operation').value;
+            const difficulty = document.getElementById('difficulty').value;
+            const numQuestions = parseInt(document.getElementById('numQuestions').value);
+            const problemsContainer = document.getElementById('mathProblems');
+
+            updateTitle(); // Update title before generating problems
+
+            problemsContainer.innerHTML = '';
+
+            window.correctAnswers = [];
+
+            for (let i = 0; i < numQuestions; i++) {
+                const { problem, answer } = generateProblem(operation, difficulty);
+                const problemElement = document.createElement('div');
+                problemElement.className = 'problem-container';
+
+                const problemDiv = document.createElement('div');
+                problemDiv.className = 'problem';
+                problemDiv.textContent = problem;
+
+                const userAnswerDiv = document.createElement('div');
+                userAnswerDiv.className = 'user-answer';
+                userAnswerDiv.innerHTML = '<input type="text" class="user-input" />';
+
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.className = 'feedback';
+
+                problemElement.appendChild(problemDiv);
+                problemElement.appendChild(userAnswerDiv);
+                problemElement.appendChild(feedbackDiv);
+                problemsContainer.appendChild(problemElement);
+
+                window.correctAnswers.push(answer);
+            }
+        }
+
+        function checkAnswers() {
+            const userInputs = document.querySelectorAll('.user-input');
+            const feedbacks = document.querySelectorAll('.feedback');
+            let correctCount = 0;
+            const totalCount = userInputs.length;
+
+            userInputs.forEach((input, index) => {
+                const correctAnswer = window.correctAnswers[index].toString(); // Ensure both are strings
+                const userAnswer = input.value.trim();
+
+                if (userAnswer === correctAnswer) {
+                    feedbacks[index].innerHTML = '<span class="correct"></span> Correct!';
+                    correctCount++;
+                } else {
+                    feedbacks[index].innerHTML = '<span class="incorrect"></span> Answer: ' + correctAnswer;
+                }
+            });
+
+            const scorePercentage = ((correctCount / totalCount) * 100).toFixed(2);
+            document.getElementById('scoreSummary').textContent = `Score: ${correctCount}/${totalCount} (${scorePercentage}%)`;
+        }
+
+        function printStudentCopy() {
+            const problemsContainer = document.getElementById('mathProblems');
+            const feedbacks = problemsContainer.querySelectorAll('.feedback');
+            feedbacks.forEach(feedback => feedback.innerHTML = ''); // Clear feedback for student copy
+            const userInputs = problemsContainer.querySelectorAll('.user-input');
+            userInputs.forEach(input => input.value = ''); // Ensure inputs are empty
+            updateTitle(); // Update title before printing
+            window.print();
+        }
+
+        function printTeacherCopy() {
+            const problemsContainer = document.getElementById('mathProblems');
+            const userInputs = problemsContainer.querySelectorAll('.user-input');
+            userInputs.forEach(input => input.value = ''); // Ensure inputs are empty
+            revealAnswers();
+            updateTitle(); // Update title before printing
+            window.print();
+        }
+
+        function revealAnswers() {
+            const problemsContainer = document.getElementById('mathProblems');
+            const userInputs = problemsContainer.querySelectorAll('.user-input');
+            const feedbacks = document.querySelectorAll('.feedback');
+            userInputs.forEach((input, index) => {
+                const correctAnswer = window.correctAnswers[index];
+                feedbacks[index].innerHTML = `<span class="correct"></span> Answer: ${correctAnswer}`;
+            });
+        }
+
+        function hideAnswers() {
+            const feedbacks = document.querySelectorAll('.feedback');
+            feedbacks.forEach(feedback => {
+                feedback.innerHTML = '';
+            });
+        }
+
+        window.onafterprint = hideAnswers;
+
+        window.onload = generateProblems;
+    </script>
+</body>
+</html>
+
